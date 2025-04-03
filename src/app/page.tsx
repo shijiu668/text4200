@@ -73,8 +73,8 @@ export default function Home() {
         }
 
         if (statusData.status === 'pending') {
-          // 如果任务还在进行中，等待1秒后再次检查
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // 如果任务还在进行中，等待3秒后再次检查
+          await new Promise(resolve => setTimeout(resolve, 3000));
           return checkStatus();
         }
 
