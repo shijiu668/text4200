@@ -36,6 +36,7 @@ export default function Home() {
       setLoading(true);
       setError('');
       
+      // 发起初始请求获取任务ID
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
@@ -53,7 +54,36 @@ export default function Home() {
         throw new Error(data.error || '生成描述失败');
       }
 
-      setDescription(data.description);
+      const { taskId } = data;
+
+      // 轮询检查任务状态
+      const checkStatus = async () => {
+        const statusResponse = await fetch('/api/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ taskId })
+        });
+
+        const statusData = await statusResponse.json();
+
+        if (!statusResponse.ok) {
+          throw new Error(statusData.error || '检查任务状态失败');
+        }
+
+        if (statusData.status === 'pending') {
+          // 如果任务还在进行中，等待1秒后再次检查
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return checkStatus();
+        }
+
+        if (statusData.description) {
+          setDescription(statusData.description);
+        }
+      };
+
+      await checkStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : '生成描述时发生错误');
     } finally {
